@@ -15,12 +15,10 @@ const stripe = require("stripe")(process.env.STRIPE_PRIVATE_KEY);
 app.get("/", (req, res) => {
   res.render("index");
 });
-app.post("/price_set", async (req, res) => {
-  const { price } = req.body;
-  totalPrice = price;
-  res.redirect("/create-checkout-session");
-});
-app.get("/create-checkout-session", async (req, res) => {
+
+app.get("/price_set/:price", async (req, res) => {
+  const { price } = req.params;
+  console.log(price);
   try {
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
@@ -28,31 +26,29 @@ app.get("/create-checkout-session", async (req, res) => {
       line_items: [
         {
           price_data: {
-            currency: `${process.env.currency}`,
+	  currency: `${process.env.currency}`,
             product_data: {
               name: "Custom Services",
             },
-            unit_amount: parseInt(totalPrice) * 100,
+            unit_amount: price,
           },
           quantity: 1,
         },
       ],
-
-      success_url: `${process.env.CLIENT_URL}/success`,
-      cancel_url: `${process.env.CLIENT_URL}/cancel`,
+		success_url: `${process.env.CLIENT_URL}/success`,
+		cancel_url: `${process.env.CLIENT_URL}/cancel`,
     });
     res.redirect(session.url);
-    // res.json({ url: session.url });
   } catch (e) {
     res.status(500).json({ error: e.message });
-    console.log(e.message);
   }
 });
 app.get("/cancel", (req, res) => {
-  res.render(`cancel`);
+	res.json({ msg: "Cancel" });
 });
 app.get("/success", (req, res) => {
-  res.render(`success`);
+	
+	res.json({ msg: "success" });
 });
 const port = process.env.PORT || 4000;
 app.listen(port, () => {
